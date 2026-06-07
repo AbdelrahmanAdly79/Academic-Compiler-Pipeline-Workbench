@@ -1,0 +1,18 @@
+using namespace std;
+
+int main() {
+    int x;
+    int x;
+
+    switch (x) {
+    case 1:
+        y = 3;
+        break;
+    case 1:
+        x = z + 1;
+    default:
+        break;
+    }
+
+    return 0;
+}

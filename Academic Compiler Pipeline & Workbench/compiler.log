@@ -1,0 +1,50 @@
+2026-05-15 22:34:16,369 | INFO    | grammar | Generating canonical LR(0) item sets
+2026-05-15 22:34:16,372 | INFO    | grammar | Generated 107 LR state(s)
+2026-05-15 22:34:16,373 | INFO    | grammar | Grammar is SLR(1) conflict-free
+2026-05-15 22:34:30,422 | INFO    | gui | Running compiler from PySide6 GUI
+2026-05-15 22:34:30,423 | INFO    | pipeline | Compiler pipeline started
+2026-05-15 22:34:30,423 | INFO    | lexer | Starting lexical analysis
+2026-05-15 22:34:30,424 | INFO    | lexer | Lexical analysis completed with 77 token(s)
+2026-05-15 22:34:30,424 | INFO    | parser | Starting SLR parsing
+2026-05-15 22:34:30,469 | INFO    | parser | Parsing completed successfully
+2026-05-15 22:34:30,469 | INFO    | semantic | Starting semantic analysis
+2026-05-15 22:34:30,470 | INFO    | semantic | Semantic analysis completed with 0 diagnostic(s)
+2026-05-15 22:34:30,470 | INFO    | tac | Starting TAC generation
+2026-05-15 22:34:30,470 | INFO    | tac | Generated 20 TAC instruction(s)
+2026-05-15 22:34:30,470 | INFO    | optimizer | Starting optimization passes
+2026-05-15 22:34:30,472 | INFO    | optimizer | Optimization completed with 0 note(s)
+2026-05-15 22:34:30,472 | INFO    | pipeline | Compiler pipeline finished successfully
+2026-05-15 22:34:32,357 | INFO    | runtime | Starting runtime execution
+2026-05-15 22:34:32,357 | INFO    | runtime | Runtime paused for input choice
+2026-05-15 22:34:32,405 | INFO    | gui | Running compiler from PySide6 GUI
+2026-05-15 22:34:32,405 | INFO    | pipeline | Compiler pipeline started
+2026-05-15 22:34:32,406 | INFO    | lexer | Starting lexical analysis
+2026-05-15 22:34:32,406 | INFO    | lexer | Lexical analysis completed with 77 token(s)
+2026-05-15 22:34:32,406 | INFO    | parser | Starting SLR parsing
+2026-05-15 22:34:32,408 | INFO    | parser | Parsing completed successfully
+2026-05-15 22:34:32,409 | INFO    | semantic | Starting semantic analysis
+2026-05-15 22:34:32,409 | INFO    | semantic | Semantic analysis completed with 0 diagnostic(s)
+2026-05-15 22:34:32,409 | INFO    | tac | Starting TAC generation
+2026-05-15 22:34:32,409 | INFO    | tac | Generated 20 TAC instruction(s)
+2026-05-15 22:34:32,410 | INFO    | optimizer | Starting optimization passes
+2026-05-15 22:34:32,411 | INFO    | optimizer | Optimization completed with 0 note(s)
+2026-05-15 22:34:32,411 | INFO    | pipeline | Compiler pipeline finished successfully
+2026-05-15 22:34:33,805 | INFO    | runtime | Starting runtime execution
+2026-05-15 22:34:33,805 | INFO    | runtime | Runtime paused for input choice
+2026-05-15 22:34:42,959 | INFO    | runtime | Starting runtime execution
+2026-05-15 22:34:42,959 | INFO    | runtime | Runtime execution completed
+2026-05-15 22:34:51,989 | INFO    | gui | Running compiler from PySide6 GUI
+2026-05-15 22:34:51,990 | INFO    | pipeline | Compiler pipeline started
+2026-05-15 22:34:51,990 | INFO    | lexer | Starting lexical analysis
+2026-05-15 22:34:51,990 | INFO    | lexer | Lexical analysis completed with 77 token(s)
+2026-05-15 22:34:51,990 | INFO    | parser | Starting SLR parsing
+2026-05-15 22:34:51,993 | INFO    | parser | Parsing completed successfully
+2026-05-15 22:34:51,993 | INFO    | semantic | Starting semantic analysis
+2026-05-15 22:34:51,994 | INFO    | semantic | Semantic analysis completed with 0 diagnostic(s)
+2026-05-15 22:34:51,994 | INFO    | tac | Starting TAC generation
+2026-05-15 22:34:51,994 | INFO    | tac | Generated 20 TAC instruction(s)
+2026-05-15 22:34:51,994 | INFO    | optimizer | Starting optimization passes
+2026-05-15 22:34:51,996 | INFO    | optimizer | Optimization completed with 0 note(s)
+2026-05-15 22:34:51,996 | INFO    | pipeline | Compiler pipeline finished successfully
+2026-05-15 22:34:53,343 | INFO    | runtime | Starting runtime execution
+2026-05-15 22:34:53,343 | INFO    | runtime | Runtime paused for input choice

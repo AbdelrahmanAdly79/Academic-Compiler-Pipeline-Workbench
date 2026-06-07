@@ -1,0 +1,51 @@
+\contentsline {section}{\numberline {1}Abstract}{1}{section.1}%
+\contentsline {section}{\numberline {2}Introduction}{1}{section.2}%
+\contentsline {section}{\numberline {3}Project Scope and Language Features}{2}{section.3}%
+\contentsline {section}{\numberline {4}Overall System Architecture}{2}{section.4}%
+\contentsline {section}{\numberline {5}Phase 1: Context Free Grammar Design}{4}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Design Goals}{4}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Grammar Design Steps}{4}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Complete Grammar}{5}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Why This Grammar Fits LR Parsing}{5}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Phase 2: Lexical Analysis}{6}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Objectives}{6}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Token Categories}{6}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Design Steps}{6}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Representative Lexer Output}{7}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Phase 3: Syntax Analysis and AST Construction}{7}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Chosen Method}{7}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Design Steps}{7}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Shift/Reduce Parsing Procedure}{8}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}AST Generation}{8}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Example AST in JSON Format}{9}{subsection.7.5}%
+\contentsline {section}{\numberline {8}Phase 4: Semantic Analysis}{10}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Objectives}{10}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Implemented Checks}{10}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Design Steps}{11}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Symbol Table Example}{11}{subsection.8.4}%
+\contentsline {subsection}{\numberline {8.5}Examples of Semantic Errors}{11}{subsection.8.5}%
+\contentsline {section}{\numberline {9}Phase 5: Intermediate Code Generation Using TAC}{12}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Objectives}{12}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Instruction Design}{12}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Design Steps}{12}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Lowering the Switch Statement}{13}{subsection.9.4}%
+\contentsline {subsection}{\numberline {9.5}Example TAC}{13}{subsection.9.5}%
+\contentsline {section}{\numberline {10}Phase 6: TAC Optimization}{14}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Optimization Goals}{14}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Implemented Optimizations}{14}{subsection.10.2}%
+\contentsline {subsection}{\numberline {10.3}Design Steps}{14}{subsection.10.3}%
+\contentsline {subsection}{\numberline {10.4}Example Optimized TAC}{15}{subsection.10.4}%
+\contentsline {section}{\numberline {11}Pipeline Control and User Interfaces}{15}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Compiler Pipeline}{15}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Command-Line Interface}{16}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Graphical User Interface}{16}{subsection.11.3}%
+\contentsline {section}{\numberline {12}Testing and Validation}{17}{section.12}%
+\contentsline {subsection}{\numberline {12.1}Testing Strategy}{17}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}Automated Test Cases}{17}{subsection.12.2}%
+\contentsline {subsection}{\numberline {12.3}Sample Files}{18}{subsection.12.3}%
+\contentsline {section}{\numberline {13}Compliance with Project Requirements}{18}{section.13}%
+\contentsline {section}{\numberline {14}Suggested Team Work Distribution}{18}{section.14}%
+\contentsline {section}{\numberline {15}Conclusion}{19}{section.15}%
+\contentsline {section}{\numberline {A}Appendix A: Representative Valid Input Program}{20}{appendix.A}%
+\contentsline {section}{\numberline {B}Appendix B: Example Optimizer Notes}{20}{appendix.B}%
+\contentsline {section}{\numberline {C}Appendix C: Files Included in the Submission}{20}{appendix.C}%

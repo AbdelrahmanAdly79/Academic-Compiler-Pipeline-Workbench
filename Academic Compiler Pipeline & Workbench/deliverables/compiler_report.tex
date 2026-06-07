@@ -1,0 +1,779 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{setspace}
+\usepackage{xcolor}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue
+}
+
+\lstdefinestyle{reportstyle}{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    columns=fullflexible,
+    frame=single,
+    keepspaces=true,
+    showstringspaces=false
+}
+
+\lstset{style=reportstyle}
+\setstretch{1.15}
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{titlepage}
+\centering
+{\Large Arab Academy for Science, Technology and Maritime Transport\par}
+\vspace{0.4cm}
+{\large College of Computing and Information Technology\par}
+\vspace{1.6cm}
+{\Huge\bfseries System Programming Project Report\par}
+\vspace{0.6cm}
+{\Large Five-Phase Compiler for a Small C++-Style Language\par}
+\vspace{0.3cm}
+{\Large Using an SLR Parser and Switch-Case Support\par}
+\vspace{1.6cm}
+
+\begin{tabular}{|p{0.33\textwidth}|p{0.52\textwidth}|}
+\hline
+Course & System Programming \\
+\hline
+Selected syntax analyzer & LR parser (bottom-up), specifically SLR(1) \\
+\hline
+Selected statement & switch - case - default with break \\
+\hline
+Implementation language & Python 3 \\
+\hline
+Prepared by & Fill in group member names and IDs \\
+\hline
+Supervisor / TA & Fill in if required \\
+\hline
+Submission week & Week 11 \\
+\hline
+\end{tabular}
+
+\vfill
+{\large \today\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Abstract}
+This report documents the design and implementation of a mini compiler developed for the System Programming project. The compiler implements the five required phases: context free grammar definition, lexical analysis, syntax analysis, semantic analysis, and optimized intermediate code generation using three-address code (TAC). The selected project combination is an LR parser for the \texttt{switch-case-default} statement with support for variable declarations and arithmetic expressions. The final system is implemented in Python and provides both command-line and graphical interfaces. In addition to the required functionality, the compiler also supports a small C++-style surface syntax with optional \texttt{\#include}, optional \texttt{using namespace std;}, and restricted \texttt{cin}/\texttt{cout} statements. The implementation was validated using automated tests and sample programs covering valid syntax, syntax errors, semantic errors, and code generation.
+
+\section{Introduction}
+The main objective of the project is to build a complete compiler pipeline for a restricted programming language. According to the project instructions, the compiler must include:
+
+\begin{enumerate}
+    \item a context free grammar,
+    \item a lexical analyzer,
+    \item a syntax analyzer,
+    \item a semantic analyzer,
+    \item optimized intermediate code generation using three-address code.
+\end{enumerate}
+
+The selected project in this implementation is:
+
+\begin{enumerate}
+    \item \textbf{Syntax analyzer method:} LR parser (bottom-up),
+    \item \textbf{Target statement:} \texttt{switch-case-default} with \texttt{break}.
+\end{enumerate}
+
+To make the input programs feel familiar, the implementation accepts a small C++-style syntax. However, the core academic target remains the same: declarations, expressions, assignment statements, and the required \texttt{switch-case-default} construct. Loops and \texttt{if} statements are intentionally excluded because they are outside the chosen project scope.
+
+\section{Project Scope and Language Features}
+The supported language subset includes the following constructs:
+
+\begin{enumerate}
+    \item optional \texttt{\#include <...>} directives,
+    \item optional \texttt{using namespace std;},
+    \item a single \texttt{int main() \{ ... return 0; \}} entry function,
+    \item integer variable declarations,
+    \item integer assignments,
+    \item arithmetic expressions using \texttt{+}, \texttt{*}, and parentheses,
+    \item \texttt{switch}, \texttt{case}, \texttt{default}, and \texttt{break},
+    \item restricted input/output using \texttt{cin}, \texttt{cout}, and \texttt{endl}.
+\end{enumerate}
+
+The following features are not part of the selected project and are therefore not implemented:
+
+\begin{enumerate}
+    \item \texttt{if} or \texttt{if-else},
+    \item \texttt{while}, \texttt{do-while}, or \texttt{for} loops,
+    \item arrays,
+    \item user-defined functions other than \texttt{main}.
+\end{enumerate}
+
+\section{Overall System Architecture}
+The compiler is organized into small modules with clear responsibilities. This separation made the implementation easier to debug, test, and present.
+
+\begin{center}
+\begin{tabular}{|p{0.28\textwidth}|p{0.62\textwidth}|}
+\hline
+\textbf{Module} & \textbf{Responsibility} \\
+\hline
+\texttt{grammar.py} & Defines productions, computes FIRST/FOLLOW sets, builds LR(0) states, and generates ACTION/GOTO tables. \\
+\hline
+\texttt{lexer.py} & Converts source code into tokens while removing whitespace and comments. \\
+\hline
+\texttt{parser.py} & Implements the SLR shift/reduce engine and builds the AST during reductions. \\
+\hline
+\texttt{semantic.py} & Performs declaration, duplication, compatibility, and switch-specific semantic checks. Also builds the symbol table. \\
+\hline
+\texttt{tac.py} & Generates three-address code instructions from the AST. \\
+\hline
+\texttt{optimizer.py} & Applies constant folding, constant propagation, unreachable code removal, and dead temporary elimination. \\
+\hline
+\texttt{pipeline.py} & Connects all compiler phases into one end-to-end workflow. \\
+\hline
+\texttt{models.py} & Holds shared dataclasses such as tokens, diagnostics, AST nodes, and TAC instructions. \\
+\hline
+\texttt{main.py} & Provides command-line entry and launches the GUI when needed. \\
+\hline
+\texttt{gui.py} & Presents the compiler phases visually and shows diagnostics, parse traces, AST, symbols, and TAC. \\
+\hline
+\texttt{runtime.py} & Additional feature: executes the restricted language to support the GUI console for \texttt{cin}/\texttt{cout}. \\
+\hline
+\end{tabular}
+\end{center}
+
+The execution order of the required phases is:
+
+\begin{enumerate}
+    \item lexical analysis,
+    \item syntax analysis and AST construction,
+    \item semantic analysis,
+    \item TAC generation,
+    \item TAC optimization.
+\end{enumerate}
+
+If an error appears in an earlier phase, the pipeline stops and does not continue to later phases. This prevents meaningless outputs such as TAC generated from an invalid AST.
+
+\section{Phase 1: Context Free Grammar Design}
+\subsection{Design Goals}
+The grammar was designed to satisfy both the academic project requirements and the chosen language subset. The main goals were:
+
+\begin{enumerate}
+    \item support the required \texttt{switch-case-default} structure,
+    \item support declarations and expressions as required by the project,
+    \item preserve operator precedence for arithmetic expressions,
+    \item remain suitable for bottom-up SLR parsing,
+    \item support optional C++-style wrappers without changing the core project statement.
+\end{enumerate}
+
+\subsection{Grammar Design Steps}
+The grammar was created through the following steps:
+
+\begin{enumerate}
+    \item Define the highest-level program shape as optional include directives, optional namespace usage, and one \texttt{main} function.
+    \item Define \texttt{StmtList} as a sequence of statements.
+    \item Add declaration and assignment statements first because they are needed in all sample programs.
+    \item Add input and output statements as restricted stream operations.
+    \item Add the \texttt{switch} statement and allow each case to contain a statement list.
+    \item Add \texttt{break} as a standalone statement so the semantic phase can later validate its usage.
+    \item Build expression precedence using the standard hierarchy:
+    \begin{enumerate}
+        \item \texttt{Expr} for addition,
+        \item \texttt{Term} for multiplication,
+        \item \texttt{Factor} for identifiers, numbers, and parenthesized expressions.
+    \end{enumerate}
+    \item Keep the grammar simple enough to remain conflict-free in SLR(1).
+\end{enumerate}
+
+\subsection{Complete Grammar}
+The final grammar used by the compiler is listed below.
+
+\begin{lstlisting}
+Program -> OptIncludeList OptUsingDirective MainFunction
+OptIncludeList -> IncludeList | epsilon
+IncludeList -> IncludeList Include | Include
+Include -> # include < id >
+OptUsingDirective -> UsingDirective | epsilon
+UsingDirective -> using namespace std ;
+MainFunction -> int main ( ) { MainBody }
+MainBody -> StmtList ReturnStmt | ReturnStmt
+StmtList -> StmtList Stmt | Stmt
+Stmt -> Decl | Assign | InputStmt | OutputStmt | SwitchStmt | BreakStmt
+Decl -> int id ; | int id = Expr ;
+Assign -> id = Expr ;
+InputStmt -> InputRef InputList ;
+InputRef -> cin | std :: cin
+InputList -> InputList >> id | >> id
+OutputStmt -> OutputRef OutputList ;
+OutputRef -> cout | std :: cout
+OutputList -> OutputList << OutputItem | << OutputItem
+OutputItem -> Expr | string | EndlRef
+EndlRef -> endl | std :: endl
+Expr -> Expr + Term | Term
+Term -> Term * Factor | Factor
+Factor -> id | num | ( Expr )
+SwitchStmt -> switch ( id ) { CaseList OptDefault }
+CaseList -> CaseList Case | Case
+Case -> case num : StmtList
+OptDefault -> DefaultCase | epsilon
+DefaultCase -> default : StmtList
+BreakStmt -> break ;
+ReturnStmt -> return num ;
+\end{lstlisting}
+
+\subsection{Why This Grammar Fits LR Parsing}
+This grammar is appropriate for a bottom-up parser because:
+
+\begin{enumerate}
+    \item left recursion is acceptable in LR parsing and is useful for expression lists,
+    \item operator precedence is encoded structurally,
+    \item case blocks are naturally handled as lists,
+    \item the grammar can be augmented and converted into an SLR parsing table.
+\end{enumerate}
+
+The generated parser contains \textbf{107 LR(0) states} and is \textbf{conflict-free} in SLR(1), which confirms that the grammar is valid for the chosen parsing strategy.
+
+\section{Phase 2: Lexical Analysis}
+\subsection{Objectives}
+The lexical analyzer reads raw source code and converts it into a stream of tokens. It also tracks line and column numbers to produce meaningful diagnostics.
+
+\subsection{Token Categories}
+The lexer recognizes the following token groups:
+
+\begin{center}
+\begin{tabular}{|p{0.28\textwidth}|p{0.62\textwidth}|}
+\hline
+\textbf{Category} & \textbf{Examples} \\
+\hline
+Keywords & \texttt{int}, \texttt{main}, \texttt{switch}, \texttt{case}, \texttt{default}, \texttt{break}, \texttt{return}, \texttt{using}, \texttt{namespace}, \texttt{std}, \texttt{cin}, \texttt{cout}, \texttt{endl}, \texttt{include} \\
+\hline
+Identifiers & variable names such as \texttt{x}, \texttt{y}, \texttt{choice} \\
+\hline
+Numbers & integer literals such as \texttt{0}, \texttt{14}, \texttt{200} \\
+\hline
+Strings & text literals such as \texttt{"x = "} \\
+\hline
+Single-character symbols & \texttt{\#}, \texttt{<}, \texttt{>}, \texttt{+}, \texttt{*}, \texttt{=}, \texttt{;}, \texttt{:}, \texttt{\{}, \texttt{\}}, \texttt{(}, \texttt{)} \\
+\hline
+Multi-character symbols & \texttt{::}, \texttt{<<}, \texttt{>>} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Design Steps}
+The lexical analysis phase was designed as follows:
+
+\begin{enumerate}
+    \item Read the source program character by character.
+    \item Skip whitespace characters such as spaces, tabs, carriage returns, and newlines.
+    \item Detect and remove line comments starting with \texttt{//}.
+    \item Detect and remove block comments delimited by \texttt{/*} and \texttt{*/}.
+    \item Match multi-character operators before single-character symbols.
+    \item Read string literals while supporting escaped characters.
+    \item Recognize identifiers and decide whether they are keywords.
+    \item Recognize numeric literals.
+    \item Emit an error diagnostic for any unexpected character.
+    \item Append an end-of-file token \texttt{\$}.
+\end{enumerate}
+
+\subsection{Representative Lexer Output}
+For the sample input in Appendix A, the beginning of the token stream is:
+
+\begin{lstlisting}
+USING using
+NAMESPACE namespace
+STD std
+SEMI ;
+INT int
+MAIN main
+LPAREN (
+RPAREN )
+LBRACE {
+INT int
+ID x
+ASSIGN =
+NUM 2
+PLUS +
+\end{lstlisting}
+
+This phase satisfies the project requirement that each input line must be broken into tokens after removing whitespace and comments.
+
+\section{Phase 3: Syntax Analysis and AST Construction}
+\subsection{Chosen Method}
+The selected syntax analyzer is a \textbf{bottom-up LR parser}. The implementation uses an \textbf{SLR(1)} parsing strategy generated directly from the grammar.
+
+\subsection{Design Steps}
+The parser was built in the following sequence:
+
+\begin{enumerate}
+    \item Augment the grammar with a new start production.
+    \item Compute FIRST sets for all nonterminals.
+    \item Compute FOLLOW sets for all nonterminals.
+    \item Build the canonical collection of LR(0) item sets using \texttt{closure} and \texttt{goto}.
+    \item Use FOLLOW sets to create the SLR ACTION/GOTO parsing table.
+    \item Detect conflicts during table construction.
+    \item Run a shift/reduce engine on the token stream.
+    \item Execute semantic actions during reductions to build the AST.
+\end{enumerate}
+
+\subsection{Shift/Reduce Parsing Procedure}
+During parsing, the implementation maintains:
+
+\begin{enumerate}
+    \item a state stack,
+    \item a symbol stack,
+    \item a value stack,
+    \item a parse trace for debugging and visualization.
+\end{enumerate}
+
+For each step:
+
+\begin{enumerate}
+    \item the current state and lookahead token are used to access the ACTION table,
+    \item a \texttt{shift} action pushes a new state and token,
+    \item a \texttt{reduce} action pops the right-hand side symbols, executes a semantic action, and applies a GOTO transition,
+    \item \texttt{accept} ends the parse successfully,
+    \item a missing action produces a syntax error message showing the unexpected token and expected continuations.
+\end{enumerate}
+
+\subsection{AST Generation}
+The abstract syntax tree is built during parser reductions rather than in a separate pass. This makes the syntax analyzer directly produce the representation required by later phases.
+
+Important AST node types include:
+
+\begin{enumerate}
+    \item \texttt{Program},
+    \item \texttt{Declaration},
+    \item \texttt{Assignment},
+    \item \texttt{BinaryOp},
+    \item \texttt{Input},
+    \item \texttt{Output},
+    \item \texttt{Switch},
+    \item \texttt{Case},
+    \item \texttt{Default},
+    \item \texttt{Break},
+    \item \texttt{Identifier},
+    \item \texttt{Number},
+    \item \texttt{String},
+    \item \texttt{Endl}.
+\end{enumerate}
+
+\subsection{Example AST in JSON Format}
+The project instructions require AST generation in JSON format. A simplified excerpt from a valid program is shown below:
+
+\begin{lstlisting}
+{
+  "type": "Program",
+  "children": [
+    {
+      "type": "Declaration",
+      "value": "int",
+      "children": [
+        { "type": "Identifier", "value": "x" },
+        {
+          "type": "BinaryOp",
+          "value": "+",
+          "children": [
+            { "type": "Number", "value": 2 },
+            {
+              "type": "BinaryOp",
+              "value": "*",
+              "children": [
+                { "type": "Number", "value": 3 },
+                { "type": "Number", "value": 4 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\end{lstlisting}
+
+\section{Phase 4: Semantic Analysis}
+\subsection{Objectives}
+The semantic analyzer checks whether a syntactically valid program also obeys the language rules. This phase also generates the symbol table required by the project instructions.
+
+\subsection{Implemented Checks}
+The implementation performs the following required checks:
+
+\begin{enumerate}
+    \item \textbf{Check if all used variables are declared.}
+    \item \textbf{Check for no repeated variables.}
+    \item \textbf{Check if all variables are compatible in expression.}
+    \item \textbf{Generate a symbol table.}
+\end{enumerate}
+
+Additional semantic checks were also implemented:
+
+\begin{enumerate}
+    \item \texttt{break} is only valid inside a switch case,
+    \item duplicate \texttt{case} values are rejected,
+    \item a warning is produced for case fall-through when a case does not end with \texttt{break},
+    \item a warning is produced when a switch statement has no default case,
+    \item unqualified \texttt{cin}, \texttt{cout}, and \texttt{endl} require \texttt{using namespace std;}.
+\end{enumerate}
+
+\subsection{Design Steps}
+The semantic phase follows these steps:
+
+\begin{enumerate}
+    \item Create the global scope.
+    \item Traverse the AST from top to bottom.
+    \item Insert declarations into the symbol table.
+    \item Reject duplicate declarations before inserting them.
+    \item Resolve identifier uses through the current scope chain.
+    \item Infer expression types recursively.
+    \item Validate assignments and declaration initializers.
+    \item For each switch statement, create nested scopes for cases and default.
+    \item Record all final symbol entries for presentation in the GUI and report.
+\end{enumerate}
+
+\subsection{Symbol Table Example}
+For the valid sample program in Appendix A, the symbol table contains:
+
+\begin{center}
+\begin{tabular}{|p{0.22\textwidth}|p{0.18\textwidth}|p{0.22\textwidth}|p{0.18\textwidth}|}
+\hline
+\textbf{Name} & \textbf{Type} & \textbf{Scope} & \textbf{Line} \\
+\hline
+\texttt{x} & \texttt{int} & \texttt{global} & 4 \\
+\hline
+\texttt{y} & \texttt{int} & \texttt{global} & 5 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Examples of Semantic Errors}
+Examples detected by the analyzer include:
+
+\begin{enumerate}
+    \item \texttt{int x; int x;} -> duplicate declaration,
+    \item \texttt{y = 3;} when \texttt{y} is undeclared -> undeclared variable,
+    \item using a variable of the wrong type in an arithmetic expression,
+    \item repeating \texttt{case 1:} twice in the same switch.
+\end{enumerate}
+
+\section{Phase 5: Intermediate Code Generation Using TAC}
+\subsection{Objectives}
+The intermediate code generator converts the AST into a lower-level, machine-independent representation. The chosen representation is three-address code (TAC), which is simple to optimize and easy to explain academically.
+
+\subsection{Instruction Design}
+The TAC generator uses instruction forms such as:
+
+\begin{enumerate}
+    \item \texttt{decl type var},
+    \item \texttt{x = y},
+    \item \texttt{t1 = a + b},
+    \item \texttt{t2 = a * b},
+    \item \texttt{if x == 1 goto L1},
+    \item \texttt{goto L2},
+    \item labels such as \texttt{Lcase1:},
+    \item restricted I/O instructions such as \texttt{cin >> x} and \texttt{cout << y}.
+\end{enumerate}
+
+\subsection{Design Steps}
+The TAC generation phase was designed as follows:
+
+\begin{enumerate}
+    \item Visit each top-level statement in program order.
+    \item For declarations, emit a \texttt{decl} instruction.
+    \item For initialized declarations and assignments, recursively generate expression code.
+    \item For arithmetic expressions, create temporary variables to preserve evaluation order.
+    \item For switch statements, lower the construct into conditional jumps and labels.
+    \item For \texttt{break}, emit a jump to the end label of the current switch.
+    \item For output, emit one TAC instruction per output item.
+\end{enumerate}
+
+\subsection{Lowering the Switch Statement}
+The \texttt{switch} statement is translated into TAC using this strategy:
+
+\begin{enumerate}
+    \item generate one label for every case,
+    \item generate one end label for the whole switch,
+    \item compare the switch variable with each case constant,
+    \item jump to the corresponding case label when a match occurs,
+    \item jump to the default label if no case matches,
+    \item emit case bodies in order,
+    \item turn each \texttt{break} into \texttt{goto end\_label}.
+\end{enumerate}
+
+\subsection{Example TAC}
+For the valid sample program, the compiler produces the following TAC:
+
+\begin{lstlisting}
+decl int x
+t1 = 3 * 4
+t2 = 2 + t1
+x = t2
+decl int y
+y = 0
+cout << "x = "
+cout << x
+cout << endl
+if x == 1 goto Lcase2
+if x == 2 goto Lcase3
+goto Ldefault4
+Lcase2:
+t3 = x + 1
+y = t3
+goto Lend1
+Lcase3:
+t4 = y * 2
+y = t4
+goto Lend1
+Ldefault4:
+y = 0
+Lend1:
+cout << "y = "
+cout << y
+cout << endl
+\end{lstlisting}
+
+\section{Phase 6: TAC Optimization}
+\subsection{Optimization Goals}
+The project requires optimized intermediate code generation. After TAC is created, the compiler runs an optimizer to improve the instruction sequence without changing program meaning.
+
+\subsection{Implemented Optimizations}
+Three optimizations are currently applied:
+
+\begin{enumerate}
+    \item \textbf{Constant folding} for arithmetic on known constants,
+    \item \textbf{Constant propagation} into later assignments and outputs,
+    \item \textbf{Unreachable code elimination} after unconditional jumps,
+    \item \textbf{Dead temporary elimination} when generated temporaries are never used later.
+\end{enumerate}
+
+\subsection{Design Steps}
+The optimization phase executes the following passes:
+
+\begin{enumerate}
+    \item Make a copy of the original TAC.
+    \item Scan instructions from top to bottom and keep an environment of known constants.
+    \item Replace arithmetic on constant operands by a direct assignment.
+    \item Clear the environment at labels and jumps to remain conservative.
+    \item Remove instructions that appear after an unconditional \texttt{goto} and before the next label.
+    \item Traverse the final code backward to remove assignments to unused temporary variables.
+\end{enumerate}
+
+\subsection{Example Optimized TAC}
+For the sample program, optimization simplifies the beginning of the code to:
+
+\begin{lstlisting}
+decl int x
+x = 14
+decl int y
+y = 0
+cout << "x = "
+cout << 14
+cout << endl
+\end{lstlisting}
+
+The optimizer also reports informative notes such as:
+
+\begin{enumerate}
+    \item \texttt{Constant folded t1 = 3 * 4.}
+    \item \texttt{Constant folded t2 = 2 + 12.}
+    \item \texttt{Removed dead temporary assignment: t2 = 14}
+\end{enumerate}
+
+\section{Pipeline Control and User Interfaces}
+\subsection{Compiler Pipeline}
+The \texttt{pipeline.py} module coordinates the five required phases. It stores all artifacts in one structure containing:
+
+\begin{enumerate}
+    \item tokens,
+    \item diagnostics,
+    \item parse trace,
+    \item AST,
+    \item semantic result,
+    \item TAC,
+    \item optimized TAC.
+\end{enumerate}
+
+This structure makes the compiler easy to inspect from both the command line and the GUI.
+
+\subsection{Command-Line Interface}
+The command-line mode prints:
+
+\begin{enumerate}
+    \item diagnostics,
+    \item token stream,
+    \item parse steps,
+    \item AST as JSON,
+    \item TAC,
+    \item optimized TAC.
+\end{enumerate}
+
+The report example was generated using:
+
+\begin{lstlisting}
+python3 main.py --cli samples/valid_switch_case.txt
+\end{lstlisting}
+
+\subsection{Graphical User Interface}
+Although the GUI is not part of the minimum project requirement, it improves demonstration quality. The interface presents:
+
+\begin{enumerate}
+    \item source editor with syntax highlighting,
+    \item diagnostics panel,
+    \item token stream table,
+    \item LR parsing table and trace,
+    \item AST tree and JSON view,
+    \item symbol table and semantic diagnostics,
+    \item TAC and optimized TAC views,
+    \item minimal console for \texttt{cin}/\texttt{cout} execution.
+\end{enumerate}
+
+\section{Testing and Validation}
+\subsection{Testing Strategy}
+The project was validated using a mixture of sample programs and automated unit tests. The tests cover:
+
+\begin{enumerate}
+    \item successful compilation of a valid program,
+    \item correct reporting of syntax errors,
+    \item correct reporting of semantic errors,
+    \item conflict-free parsing table generation,
+    \item namespace rules for \texttt{cin}/\texttt{cout},
+    \item runtime interaction for \texttt{cin} in the GUI console model.
+\end{enumerate}
+
+\subsection{Automated Test Cases}
+The following test cases are implemented:
+
+\begin{enumerate}
+    \item \texttt{test\_valid\_program\_runs\_full\_pipeline}
+    \item \texttt{test\_invalid\_syntax\_is\_reported}
+    \item \texttt{test\_semantic\_errors\_stop\_code\_generation}
+    \item \texttt{test\_parse\_table\_is\_conflict\_free}
+    \item \texttt{test\_unqualified\_io\_requires\_using\_namespace\_std}
+    \item \texttt{test\_qualified\_io\_is\_valid\_without\_using\_namespace\_std}
+    \item \texttt{test\_runtime\_executor\_handles\_cin\_cout\_and\_switch}
+\end{enumerate}
+
+They can be executed using:
+
+\begin{lstlisting}
+python3 -m unittest discover -s tests -v
+\end{lstlisting}
+
+At the time of preparing this report, all tests pass successfully.
+
+\subsection{Sample Files}
+The following sample files are included for demonstration:
+
+\begin{enumerate}
+    \item \texttt{samples/valid\_switch\_case.txt}
+    \item \texttt{samples/cin\_cout\_switch.txt}
+    \item \texttt{samples/invalid\_syntax.txt}
+    \item \texttt{samples/semantic\_errors.txt}
+\end{enumerate}
+
+\section{Compliance with Project Requirements}
+Table \ref{tab:compliance} summarizes how the implementation satisfies the stated project requirements.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{0.34\textwidth}|p{0.56\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{How it is satisfied} \\
+\hline
+Generate CFG for the selected statement including declarations and expressions & Implemented in \texttt{grammar.py}; grammar includes declarations, expressions, and \texttt{switch-case-default}. \\
+\hline
+Lexical analyzer removes whitespace/comments and produces tokens & Implemented in \texttt{lexer.py}. \\
+\hline
+Syntax analyzer builds AST in JSON format & Implemented in \texttt{parser.py} and \texttt{models.py}. \\
+\hline
+Semantic analyzer checks declarations, duplicates, type compatibility, and symbol table & Implemented in \texttt{semantic.py}. \\
+\hline
+Generate optimized TAC & Implemented in \texttt{tac.py} and \texttt{optimizer.py}. \\
+\hline
+Use one of the allowed syntax methods & Implemented as an LR parser (SLR bottom-up). \\
+\hline
+\end{tabular}
+\caption{Requirement compliance summary}
+\label{tab:compliance}
+\end{table}
+
+\section{Suggested Team Work Distribution}
+The project instructions divide the work among three members. The current code base can be studied and presented using the following mapping:
+
+\begin{center}
+\begin{tabular}{|p{0.20\textwidth}|p{0.68\textwidth}|}
+\hline
+\textbf{Member} & \textbf{Recommended files and responsibilities} \\
+\hline
+Member A & Context free grammar generation and lexical analyzer: \texttt{grammar.py}, \texttt{lexer.py}, and the token/production models in \texttt{models.py}. \\
+\hline
+Member B & Syntax analyzer and semantic analyzer: \texttt{parser.py}, \texttt{semantic.py}, and AST-related models in \texttt{models.py}. \\
+\hline
+Member C & TAC generation and optimization: \texttt{tac.py}, \texttt{optimizer.py}, and pipeline integration in \texttt{pipeline.py}. \\
+\hline
+\end{tabular}
+\end{center}
+
+This distribution aligns well with the project requirement that the phases be divided across group members.
+
+\section{Conclusion}
+This project successfully implements a five-phase compiler for a restricted language centered on the required \texttt{switch-case-default} construct. The compiler includes a formally defined grammar, a lexer, an SLR parser, AST generation, semantic validation, symbol table generation, TAC emission, and TAC optimization. The implementation is modular, testable, and demonstrable through both CLI and GUI interfaces. In addition to satisfying the required project phases, the system provides useful extras such as C++-style syntax, parse-trace visualization, and a minimal runtime console for interactive demonstrations.
+
+\clearpage
+\appendix
+\section{Appendix A: Representative Valid Input Program}
+
+\begin{lstlisting}[language=C++]
+using namespace std;
+
+int main() {
+    int x = 2 + (3 * 4);
+    int y = 0;
+
+    cout << "x = " << x << endl;
+
+    switch (x) {
+    case 1:
+        y = x + 1;
+        break;
+    case 2:
+        y = y * 2;
+        break;
+    default:
+        y = 0;
+    }
+
+    cout << "y = " << y << endl;
+    return 0;
+}
+\end{lstlisting}
+
+\section{Appendix B: Example Optimizer Notes}
+
+\begin{lstlisting}
+[INFO] optimizer: Constant folded t1 = 3 * 4.
+[INFO] optimizer: Constant folded t2 = 2 + 12.
+[INFO] optimizer: Propagated constant into assignment of x.
+[INFO] optimizer: Propagated constant into output statement.
+[INFO] optimizer: Removed dead temporary assignment: t2 = 14
+[INFO] optimizer: Removed dead temporary assignment: t1 = 12
+\end{lstlisting}
+
+\section{Appendix C: Files Included in the Submission}
+The source code submission should include at minimum:
+
+\begin{enumerate}
+    \item all Python source files,
+    \item the \texttt{samples} directory,
+    \item this report,
+    \item the PowerPoint presentation prepared separately.
+\end{enumerate}
+
+\end{document}

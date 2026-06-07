@@ -1,0 +1,22 @@
+#include <iostream>
+int main() {
+    int choice;
+    int value = 0;
+
+    std::cout << "Enter choice: ";
+    std::cin >> choice;
+
+    switch (choice) {
+    case 1:
+        value = 100;
+        break;
+    case 2:
+        value = 200;
+        break;
+    default:
+        value = 300;
+    }
+
+    std::cout << "value = " << value << std::endl;
+    return 0;
+}
